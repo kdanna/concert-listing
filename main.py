@@ -1,7 +1,8 @@
 # import libraries
 import urllib2
 from bs4 import BeautifulSoup
-
+import csv
+from datetime import datetime
 
 # test one url to scrape concert listings and then add the others in the array
 
@@ -22,7 +23,7 @@ print 'venue_name: ', venue_name
 
 # find headliner name
 headliner_name_box = soup.find('h1', attrs={'class': 'headliners summary'})
-headliner_name = headliner_name_box.a.string  # find the <a> child tag and grab out the text using the .string method
+headliner_name = headliner_name_box.a.string # find the <a> child tag and grab out the text using the .string method
 print 'headliner_name: ', headliner_name
 
 # find concert openers
@@ -38,3 +39,12 @@ print 'concert date: ', concert_date
 ticket_price = soup.find('h3', attrs={'class': 'price-range'}).string.strip()
 print 'ticket price: ', ticket_price
 
+# open a csv file and write out concert contents
+concert_row = [venue_name, headliner_name, supporting_name, concert_date, ticket_price]
+
+with open('hi-dive-listings.csv', 'wb') as csv_file:
+    writer = csv.DictWriter(csv_file, fieldnames=['venue name', 'headliner name', 'supporting act(s)', 'concert date', 'ticket price', 'date scraped'],  delimiter = ',')
+    writer.writeheader()
+    writer.writerow({'venue name': venue_name, 'headliner name': headliner_name,
+                     'supporting act(s)': supporting_name, 'concert date': concert_date,
+                     'ticket price': ticket_price, 'date scraped': datetime.today().date()})
