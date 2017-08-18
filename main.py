@@ -1,70 +1,61 @@
 # import libraries
-import sys
 import urllib2
 import csv
 import logging
 from bs4 import BeautifulSoup
-from datetime import datetime
-
 
 
 def setup_logging():
-      # set up logging
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        format="%(asctime)s - %(levelname)s - %(filename)s - %(message)s",
+        level=logging.INFO)
+    log = logging.getLogger()
 
 
 def main():
 
-    setup_logging()
-    logging.debug('starting job')
+    logging.info('program starting')
 
-    # test one url to scrape concert listings and then add the others in the array
+    # test one url to scrape concert listings
     venue_page = 'http://www.hi-dive.com/'
 
-    '''use urllib2 to get the html page for the vendue_page url.
-    Query the website and return the results to a new variable'''
+    # query the website and return the results to a new variable
     page = urllib2.urlopen(venue_page).read()
 
-    # use BeautulSoup to parse the html and store its contents in a new variable
+    # use BeautulSoup to parse the html and store its contents into a new variable
     soup = BeautifulSoup(page, 'html.parser')
 
-    # now it's time to extract the listings data I want to keep by finding the right tag and indentifying attrs
-    # find venue name
-    venue_name = soup.title.string.strip()
-    print 'venue_name: ', venue_name
+    # this will create a BS concert section object that is iterable
+    concerts = soup.find_all('div', attrs={'class': "list-view-item"})
+    # print concert_details[0].prettify() 
 
-    # find headliner name
-    headliner_name_box = soup.find('h1', attrs={'class': 'headliners summary'})
-    headliner_name = headliner_name_box.a.string # find the <a> child tag and grab out the text using the .string method
-    print 'headliner_name: ', headliner_name
+    all_concert_listings = [] # create a master list of all the concert event listings from sing_concert_listing
+    for concert in concerts:
+        try:
+            single_concert_listing = []  # create a concert list for each event
+            headliner = concert.find('h1', attrs={'class': 'headliners summary'}).text.strip()
+            single_concert_listing.append(headliner)
+            opening_act = concert.find('h2', attrs={'class': 'supports description'}).text.strip()
+            single_concert_listing.append(opening_act)
+            date = concert.find('h2', attrs={'class': 'dates'}).text.strip()
+            single_concert_listing.append(date)
+            ticket_price = concert.find('h3', attrs={'class': 'price-range'}).text.strip()
+            single_concert_listing.append(ticket_price)
 
-    # find concert openers
-    supporting_name_box = soup.find('h2', attrs={'class': 'supports description'})
-    supporting_name = supporting_name_box.a.string
-    print 'supporting_names: ', supporting_name
-
-    # find concert date
-    concert_date = soup.find('h2', attrs={'class': 'dates'}).string
-    print 'concert date: ', concert_date
-
-    # find concert price
-    ticket_price = soup.find('h3', attrs={'class': 'price-range'}).string.strip()
-    print 'ticket price: ', ticket_price
+            all_concert_listings.append(single_concert_listing)
+        except Exception as e:
+            logging.info('exception raised, but passed so program will run: %s' % e )
+            pass
 
     # open a csv file and write out concert contents
-    concert_row = [venue_name, headliner_name, supporting_name, concert_date, ticket_price]
-
-
     with open('hi-dive-listings.csv', 'wb') as csv_file:
-        writer = csv.DictWriter(csv_file, fieldnames=['venue name', 'headliner name', 'supporting act(s)', 'concert date', 'ticket price', 'date scraped'],  delimiter = ',')
-        writer.writeheader()
-        writer.writerow({'venue name': venue_name, 'headliner name': headliner_name,
-                         'supporting act(s)': supporting_name, 'concert date': concert_date,
-                         'ticket price': ticket_price, 'date scraped': datetime.today().date()})
-        logging.debug('writing rows complete')
+        writer = csv.writer(csv_file,  delimiter = ',')
+        writer.writerows(all_concert_listings)
+
+        logging.info('rows written to csv. program complete')
 
 
 if __name__ == '__main__':
-    main()
+
+    setup_logging()
+    main()  
