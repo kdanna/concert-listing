@@ -3,7 +3,7 @@ import urllib2
 import logging
 from bs4 import BeautifulSoup
 
-class HiDiveShows(object):
+class LarimerLoungeShows(object):
 
     def __init__(self, venue_name, venue_url):
         self.venue_name = venue_name
@@ -18,9 +18,9 @@ class HiDiveShows(object):
         # this will create a BS concert section object that is iterable
         concerts = soup.find_all('div', attrs={'class': "list-view-item"})
         return concerts
-        # print concerts.prettify()
+        
 
-    # create list of lists contain each concert event from BS
+    #  create list of lists contain each concert event from BS
     def getConcertListings(self):
         all_concert_listings = [] # create a master list of all the concert event listings from sing_concert_listing
         for concert in self.getBSObject():
